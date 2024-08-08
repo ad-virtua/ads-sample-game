@@ -4,11 +4,49 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Unity WebGL Player | VAST Test</title>
+    <style>
+      #loading-bar-container {
+        width: 640px;
+        height: 40px; /* 高さを変更してテキストを表示可能に */
+        border: 2px solid #000;
+        border-radius: 10px;
+        background-color: #f9f9f9;
+        margin: 20px auto;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        color: #000;
+      }
+      #loading-bar {
+        width: 0;
+        height: 100%;
+        background-color: #4caf50;
+        border-radius: 10px;
+        transition: width 0.5s;
+      }
+      #loading-text {
+        position: absolute;
+      }
+    </style>
   </head>
   <body style="text-align: center; padding: 20px; border: 0; margin: 0;">
     <canvas id="unity-canvas" width=640 height=360 tabindex="-1" style="width: 640px; height: 360px; background: #231F20"></canvas>
+    <div id="loading-bar-container">
+      <div id="loading-bar"></div>
+      <div id="loading-text">Loading... 0%</div>
+    </div>
     <script src="Build/webgl2.loader.js"></script>
     <script>
+      function updateLoadingBar(progress) {
+        var loadingBar = document.getElementById('loading-bar');
+        var loadingText = document.getElementById('loading-text');
+        loadingBar.style.width = (progress * 100) + '%';
+        loadingText.textContent = 'Loading... ' + Math.round(progress * 100) + '%';
+      }
+
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         // Mobile device style: fill the whole browser client area with the game canvas:
         var meta = document.createElement('meta');
@@ -34,6 +72,16 @@
         productVersion: "0.1.0",
         // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
         // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
+      }).then((unityInstance) => {
+        unityInstance.Module.monitorRunDependencies = (remainingDependencies) => {
+          var totalDependencies = unityInstance.Module.TOTAL_MEMORY;
+          var progress = (totalDependencies - remainingDependencies) / totalDependencies;
+          updateLoadingBar(progress);
+        };
+
+        unityInstance.Module.onRuntimeInitialized = () => {
+          document.getElementById('loading-bar-container').style.display = 'none';
+        };
       });
     </script>
     <div style="width: 640px; padding: 20px; border: 2px solid #000; border-radius: 10px; background-color: #f9f9f9; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin: 0 auto;">
